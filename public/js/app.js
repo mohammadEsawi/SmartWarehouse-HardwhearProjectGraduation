@@ -101,8 +101,11 @@ function handleWebSocketMessage(message) {
       break;
     case 'robot_moved':
     case 'robot_status':
-    case 'robot_mode':
       state.robotArm = message.data;
+      updateRobotStatus();
+      break;
+    case 'robot_mode':
+      state.robotArm.mode = message.data.mode;
       updateRobotStatus();
       break;
     case 'conveyor_status':

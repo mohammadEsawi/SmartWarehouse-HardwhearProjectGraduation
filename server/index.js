@@ -4,6 +4,12 @@ const cors = require('cors');
 const WebSocket = require('ws');
 const path = require('path');
 
+// Configuration constants
+const SENSOR_UPDATE_INTERVAL = 1000;
+const PRODUCT_DETECTION_THRESHOLD = 0.9;
+const TASK_EXECUTION_TIME = 5000;
+const TASK_COMPLETION_DELAY = 1000;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -126,7 +132,7 @@ app.get('/api/products', (req, res) => {
 app.post('/api/products', (req, res) => {
   const { name, sku, rfid } = req.body;
   const product = {
-    id: Date.now(),
+    id: Date.now() + Math.random(), // Simple collision avoidance
     name,
     sku,
     rfid,
@@ -205,7 +211,7 @@ app.post('/api/robot/move', (req, res) => {
 
 app.post('/api/robot/mode', (req, res) => {
   const { mode } = req.body;
-  if (!['manual', 'auto'].includes(mode)) {
+  if (typeof mode !== 'string' || !['manual', 'auto'].includes(mode)) {
     return res.status(400).json({ error: 'Invalid mode' });
   }
   
@@ -341,9 +347,9 @@ function processNextTask() {
     
     // Process next task
     if (storage.robotArm.mode === 'auto') {
-      setTimeout(() => processNextTask(), 1000);
+      setTimeout(() => processNextTask(), TASK_COMPLETION_DELAY);
     }
-  }, 5000);
+  }, TASK_EXECUTION_TIME);
 }
 
 // Simulate sensor readings
@@ -352,7 +358,7 @@ setInterval(() => {
   storage.conveyorBelt.ldrSensor.value = Math.random() * 1023;
   
   // Simulate product detection on conveyor
-  if (storage.conveyorBelt.running && Math.random() > 0.9) {
+  if (storage.conveyorBelt.running && Math.random() > PRODUCT_DETECTION_THRESHOLD) {
     storage.conveyorBelt.ldrSensor.productDetected = true;
     
     // Simulate RFID reading
@@ -380,4 +386,4 @@ setInterval(() => {
       ldrSensor: storage.conveyorBelt.ldrSensor
     }
   });
-}, 1000);
+}, SENSOR_UPDATE_INTERVAL);
